@@ -1,0 +1,141 @@
+// ********************************************************************************************************
+//	Enecsys Gen 1 Micro Inverter Firmware 
+//
+//	MIT License
+//
+//  	Copyright 2016-2024 Daniel G. Ambrose
+//
+//	Daniel G. Ambrose
+//	12614 Bradford Woods Dr
+//	Sunset Hills, Missouri, USA 63127
+//	Email: dan27125@gmail.com
+//	Facetime: dambrose@amcominc.net
+//	Mobile:   3145044858
+//	Whatsapp: 3145044858
+//
+// 	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and 
+//	associated documentation files (the "Software"), to deal in the Software without restriction, 
+//	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+//	and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+//	subject to the following conditions:
+//
+//	The above copyright notice and this permission notice shall be included in all copies or substantial 
+//	portions of the Software.
+//
+//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//	SOFTWARE.
+//
+// ********************************************************************************************************
+
+Build_Instructions: BOOTLOADER PIC24FJ64GA004
+
+Greetings from St Louis(Sunset Hills) Missouri, USA.  I am Dan Ambrose.  Software Engineer and Father of (5) children. 
+I grew up in the 1980s and had a passion for electronics, ham radio, RF, digital electronics and computers.  
+I have ALWAYS had a passion for SOFTWARE AND HARDWARE. 
+
+I spent a great deal of time developing this bootloaderb and software for the Enecsys Gen 1 hardware a/k/a PV Key 904.  
+This open source software represents many years of work.  It works with a zigbee coprocessor via a USART 
+running at 115k baud. I also to deveop client/server zigbee wifi firmware and a windows app. 
+
+* Install tools
+
+  MPLAB X IDE v6.15		https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide	
+				https://www.microchip.com/en-us/tools-resources/archives/mplab-ecosystem
+
+  XC16 V2.10 			https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers/xc16
+
+  DFP pack 1.9.336 		Installed from MPLAB
+
+Steps to follow: 
+
+Step (1) Download and install MPLAB X IDE v6.15
+
+Step (2) Download and install XC16 V2.10 
+
+Step (3) Download and install IGS Monitoring Software
+	http://www.enecsysparts.com/	IGS Monitoring Software
+	IGS Windows Install download	http://www.enecsysparts.com/IG-download2.htm
+
+Step (4) Verify the installation of DFP pack, Tool chain
+
+DFP pack - 1.9.336 for XC16 PIC24F-GA-GB_DFP. 
+
+Step (4A) - Open up the Project Properties - Pic24_Bootloader
+On left expand Conf: [ Default ]
+
+Step (4B) - On right look for Packs:  Make sure this DFP pack is installed:
+DFP pack 1.9.336 for XC16 PIC24F-GA-GB_DFP.  
+
+Step (4C) - Next, On right look for Compiler toolchain Packs:  Make sure XC16 (v2.10) is installed and set as default
+
+Step (4D) - Next, click on "Building" set verify the hex file name and version number version 
+On Right side you will see Execute this line after build 
+cp ${ImagePath}  P24_Bootloader_1.xx.hex
+
+{ Where xx is a version number }  Edit/change the file name with xx to something else like
+
+P24_Bootloader_1.24_Beta.hex  so the resulting hex file will have a unique name that is not the same as
+production tested firmware.  
+
+Step (4E) - Next set / verify the compiler optimization options.  On left expand XC16 and then click 
+xc16-gcc.  On top right look for  Option categories: Set drop down to "Optimizations" 
+
+For this Bootloader  app set "Optimization" to level s smallest size 
+
+
+*************************************************************************
+Warning about compiler optimization for the inverter app vs bootloader  
+*************************************************************************
+
+Step (5) - Read and heed this Warning about compiler optimization for the inverter app vs bootloader  
+
+For the inverter app Only use level 1 optimization.  Do not Optimize any higher then that.  You will gain nothing.  
+It will not reduce the flash memory usage by much and could likely lead to inverter fault.  There are so many ISRs running that optimization 
+leads to trouble. Allot of time was spent reducing the source code down so there is room in flash memory to
+ and have plenty  Again, Do not use anything but - 1 - Optimize level 1
+
+The only exception is this bootloader (which is a different app then the inverter).  The bootloader does not use ANY ISRs.  
+It runs in polling mode therefore it be optimized into the smallest foot print. Experts on the microchip forum highly advised that the 
+bootloader NOT use any ISRs (because its writing to flash memory) therefore the bootloader is the only part that needs -s- (smallest size) Optimization. 
+
+It is a fact new compiler releases often can break or introduce a bug for a certain chip or family because ISR's modify registers and don't know about the optimization
+This hardware can and will get destroyed if the software malfunctions.  Worse is one malfunction  can cause a cascade failure therefore only use - 1 - Optimize. Optimizing compilation 
+******************************************************************
+
+Step (6) - From production menu - click on clean and build project.  The Bootloader_360_72 app should compile with no errors 
+Look in the folder .\dist\Bootloader_360_72\production
+You should see the output hex file: Bootloader_360_72_V3_xx.hex
+
+Step (8) - Learn and understand that this bootloader is the only app that EVER get flashed directly with a pickit3. Once the boorloader is installed
+the all further APP software is installed OTA.  The Inverter app gets installed using a windows bootloader app called IGS with a USB zigbee radio.  
+Here is a youtube video link that shows how to do that 
+
+https://www.youtube.com/watch?v=7VltmY9MUDU&t=18s
+
+
+
+************** FLASH MEMORY IMPORTANT NOTE ************** 
+Please note the PIC24FJ64GA004 chip only has 32k of 16 bit flash memory.   While the data sheet says 64k of flash memory 
+it is stored/compressed in 16 bit words so that each 16 bit word of flash memory has two separate CPU mnemonic 
+instructions.  
+************** FLASH MEMORY IMPORTANT NOTE ************** 
+
+
+It is perfectly safe and normal to OTA bootload the inverter with AC mains connected and/or while inverter is running
+I did this on a test bench thousands of times while developing this firmware.  On a fast computer this high speed bootloader 
+and IGS windows takes an average of about only 20-30 seconds to bootload the hex file.  
+
+Separate documents will be created that explain the operation of this firmware. Probably more videos. 
+
+In the meantime - If you need help email me!
+
+Best regards,
+
+Daniel G. Ambrose
+C/C++ Software Engineer 
+Sunset Hills, MO, USA
